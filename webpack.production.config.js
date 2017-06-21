@@ -6,13 +6,13 @@ var ExtractTextPlugin = require('extract-text-webpack-plugin');
 module.exports = {
   entry: './src/index.js',
   output: {
-    path: path.resolve(__dirname, 'build'),
-    filename: 'bundle-[chunkhash].js'
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'bundle-[hash].js',
+    chunkFilename: 'chunk.[id].[chunkhash].js'
   },
-  devtool: 'cheap-module-source-map',
   resolve: {
-    extensions: ['.js', '.json'],
     modules: ['node_modules', path.resolve(__dirname, 'web_modules')],
+    extensions: ['.web.js', '.js', '.json', '.css'],
     alias: {
       react: 'preact-compat',
       'react-dom': 'preact-compat'
@@ -23,10 +23,10 @@ module.exports = {
       {
         test: /\.js$/,
         include: [
-          path.resolve(__dirname, './src'),
-          path.resolve(__dirname, './node_modules/plume2')
+          path.resolve(__dirname, 'src'),
+          path.resolve(__dirname, 'web_modules')
         ],
-        loader: 'babel-loader?cacheDirectory=true'
+        loaders: 'babel-loader?cacheDirectory=true'
       },
       {
         test: /\.less$/,
@@ -36,27 +36,39 @@ module.exports = {
         })
       },
       {
-        test: /\.(png|ico|jpg|jpeg)$/,
-        loader: 'url-loader?limit=100000'
+        test: /\.(png|jpg|jpeg|gif|eot|ttf|woff|woff2|svg|svgz)(\?.+)?$/,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 10000
+            }
+          }
+        ]
       }
     ]
   },
   plugins: [
-    new ExtractTextPlugin({
-      filename: '[name].style.css',
-      allChunks: true
-    }),
     new webpack.DefinePlugin({
-      __DEV__: true
+      __DEV__: false,
+      'process.env': {
+        NODE_ENV: JSON.stringify('production')
+      }
     }),
     new HtmlWebpackPlugin({
-      env: true,
+      env: false,
       favicon: './favicon.ico',
       filename: 'index.html',
       template: './index.ejs'
+    }),
+    new webpack.DllReferencePlugin({
+      context: __dirname,
+      manifest: require('./dist/vendor-manifest.json')
+    }),
+    new webpack.optimize.UglifyJsPlugin({
+      compress: {
+        warnings: false
+      }
     })
-  ],
-  devServer: {
-    port: 3000
-  }
+  ]
 };

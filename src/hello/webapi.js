@@ -4,7 +4,7 @@ export const fetchText = () => {
     setTimeout(() => {
       resolve({
         err: null,
-        text: 'hello world from webapi'
+        res: 'hello plume2'
       });
     }, 200);
   });
